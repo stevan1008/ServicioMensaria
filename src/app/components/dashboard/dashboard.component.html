@@ -1,0 +1,150 @@
+<div [formGroup]="formMessage" [ngClass]="{'chat-container-m': isMobile, 'chat-container': !isMobile}" (window:resize)="detectMob()">
+    <div class="row m-0 h-100">
+        <div class="text-center d-inline" [ngClass]="{'ancho-30': !isMobile}" *ngIf="(conversacionActual === -1 && isMobile) || !isMobile">
+            <label class="h6" (click)="fakeNewMessage()">
+                <i class="fa-solid fa-comments"></i>
+                &nbsp;
+                CONVERSACIONES
+            </label>
+
+            <br/>
+
+
+            <div class="input-group mb-3">
+                <input type="text" class="form-control input-border-hide" formControlName="cvnFilter" (input)="filtrarConversaciones()" placeholder="Buscar una persona">
+
+                <span class="input-group-text burbuja-chat-color" id="basic-addon2">
+                    <i class="fas fa-search example-full-width-bat text-center fa-lg"></i>
+                </span>
+            </div>
+
+            <div class="full-vertical" [ngClass]="{'section': !isMobile, 'section-m': isMobile}" *ngIf="msgStack">
+                <div *ngIf="msgStackKeys.length === 0" class="text-center">
+                    <br/><br/>
+                    <i class="fa-solid fa-comment-slash fa-3x"></i>
+                    <br/><br/>
+                    <h3 class="tittle">No hay conversaciones</h3>
+                </div>
+
+                <div *ngIf="msgStackKeys.length > 0">
+                    <mat-list *ngFor="let user of msgStackKeys; index as i">
+                        <div class="row">
+                            <button mat-button class="col-sm-12" (click)="cargarConversacion(msgStack[user].id)">
+                                <mat-card class="col-sm-12 p-0 ps-2 pe-2 pt-2" [ngClass]="{'mt-2': i > 0, 'border border-2 border-secondary': user == conversacionActual && !isMobile}">
+                                    <mat-card-header *ngIf="msgStack[user].newMsgCount > 0" matBadge="{{msgStack[user].newMsgCount}}" matBadgePosition="after" matBadgeColor="accent">
+                                        <img mat-card-avatar src="{{msgStack[user].pic}}" class="example-header-image">
+                                        <mat-card-title>{{msgStack[user].nombre}}</mat-card-title>
+                                        <!--mat-icon align="end" style="text-align: end;" matBadge="15" matBadgeColor="warn">chat</mat-icon-->
+                                        <!-- <mat-card-subtitle>{{user.usu_rol}}</mat-card-subtitle> -->
+                                    </mat-card-header>
+
+                                    <mat-card-header *ngIf="msgStack[user].newMsgCount == 0">
+                                        <img mat-card-avatar src="{{msgStack[user].pic}}" class="example-header-image">
+                                        <mat-card-title>{{msgStack[user].nombre}}</mat-card-title>
+                                        <!--mat-icon align="end" style="text-align: end;" matBadge="15" matBadgeColor="warn">chat</mat-icon-->
+                                        <!-- <mat-card-subtitle>{{user.usu_rol}}</mat-card-subtitle> -->
+                                    </mat-card-header>
+
+                                    <mat-card-content class="text-start">
+                                        <mat-card-subtitle>
+                                            <strong>{{msgStack[user].ultimoUsuario}}:</strong> {{msgStack[user].ultimoMsg}}
+                                        </mat-card-subtitle>
+                                    </mat-card-content>
+                                </mat-card>
+                            </button>
+                        </div>
+                    </mat-list>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-inline" [ngClass]="{'ancho-70': !isMobile}" *ngIf="(conversacionActual !== -1 && isMobile) || !isMobile">
+            <mat-card class="full-vertical-v2" [ngClass]="{'p5p': !isMobile, 'p5p-m': isMobile}">
+                <div class="text-center" *ngIf="conversacionActual === -1">
+                    <i class="fa-solid fa-message fa-5x"></i>
+                    <br><br>
+                    <h1 class="tittle">Seleccione una conversación</h1>
+                </div>
+                
+                <div *ngIf="conversacionActual !== -1">
+                    <div class="d-inline va-super" *ngIf="isMobile">
+                        <label (click)="cerrarConversacion()">
+                            <i class="fa-solid fa-chevron-left display-4 me-3"></i>
+                        </label>
+                    </div>
+
+                    <div class="d-inline">
+                        <mat-card-header class="w-80 d-inline-flex">
+                            <img mat-card-avatar src="{{msgStack[conversacionActual].pic}}" class="example-header-image">
+                            <mat-card-title>{{msgStack[conversacionActual].nombre}}</mat-card-title>
+                            <mat-card-subtitle>{{msgStack[conversacionActual].cargo}}</mat-card-subtitle>
+                        </mat-card-header>
+                    </div>
+
+                    <mat-card-content>
+                        <div id="msg-stack" class="rounded bg-light p-1" [ngClass]="{'messages-stack section': !isMobile, 'messages-stack-m section-m': isMobile}">
+                            <div *ngFor="let msg of msgStack[conversacionActual].msg; index as i">
+                                <div class="row p-1">
+                                    <div *ngIf="msg.usu_pk_id == idMiUsuario" [ngClass]="{'col-6': !isMobile, 'col-4': isMobile}"></div>
+                                    
+                                    <div class="x-tooltip" [ngClass]="{'col-6': !isMobile, 'col-8': isMobile}">
+                                        <div class="p-2 rounded text-start fake-border"
+                                                    [ngClass]="{
+                                                        'burbuja-chat-color': msg.usu_pk_id == idMiUsuario, 
+                                                        'blanco-color': msg.usu_pk_id != idMiUsuario,
+                                                        'hand-cursor': !msg.sended && !msg.sending && msg.usu_pk_id == idMiUsuario && !isMobile,
+                                                        'border border-2 border-danger': !msg.sended && !msg.sending && msg.usu_pk_id == idMiUsuario,
+                                                        'readedFade': !msg.readed && msg.usu_pk_id != idMiUsuario
+                                                    }"
+                                                    (click)="reintentarEnvioMensaje(msg.id, msg.sended)">
+                                            {{msg.body}}
+                                        </div>
+
+                                        <div class="mt-2" [ngClass]="{'float-end': msg.usu_pk_id == idMiUsuario}">
+                                            <label class="text-muted">
+                                                {{msg.date | date: 'hh:mm dd/MM/yyyy'}}
+                                                <span *ngIf="msg.usu_pk_id == idMiUsuario">
+                                                    &nbsp;
+                                                    <i class="fa-solid fa-check" *ngIf="!msg.sending && msg.sended"></i>
+                                                    <i class="fa-solid fa-exclamation-circle text-danger" *ngIf="!msg.sending && !msg.sended" (click)="reintentarEnvioMensaje(msg.id, msg.sended)"></i>
+                                                    <mat-spinner class="d-inline-flex" [diameter]="13" *ngIf="msg.sending"></mat-spinner>
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <span class="tooltiptext" *ngIf="!msg.sended && !msg.sending && !isMobile && msg.usu_pk_id == idMiUsuario">Click para reenviar 👉</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </mat-card-content>
+
+                    <div [ngClass]="{'msg-sender': !isMobile, 'msg-sender-m': isMobile}">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text transparent-color border-0 btn-file" id="basic-addon1">
+                                <i class="fas fa-image example-full-width-bat text-center fa-lg blue-font-awesome"></i>
+                                <input type="file"/>
+                            </span>
+                            <span type="file" class="input-group-text transparent-color border-0 btn-file pe-4" id="basic-addon1">
+                                <i class="fas fa-file-pdf example-full-width-bat fa-lg blue-font-awesome"></i>
+                                <input type="file"/>
+                            </span>
+
+                            <input type="text" class="form-control input-border-hide" id="input"  formControlName="message" placeholder="Escribir mensaje" (keyup.enter)="enviarNuevoMsg()" (focus)="windowsScrollDown()"/>
+
+                            <button class="input-group-text burbuja-chat-color" id="basic-addon1" *ngIf="!isMobile" (click)="enviarNuevoMsg()">
+                                <i class="fas fa-paper-plane"></i>
+                                &nbsp;
+                                Enviar
+                            </button>
+
+                            <span class="input-group-text burbuja-chat-color" id="basic-addon1" *ngIf="isMobile" (keyup.enter)="enviarNuevoMsg()" (click)="enviarNuevoMsg()">
+                                <i class="fas fa-paper-plane"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </mat-card>
+        </div>
+    </div>
+</div>
